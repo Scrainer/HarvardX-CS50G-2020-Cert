@@ -19,6 +19,11 @@
 
 push = require 'push'
 
+Class = require 'class'
+
+require 'Paddle'
+require 'Ball'
+
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
 
@@ -27,9 +32,6 @@ VIRTUAL_HEIGHT = 243
 
 PADDLE_SPEED = 200
 
---[[
-    Runs when the game first starts up, only once; used to initialize the game.
-]]
 function love.load()
     love.graphics.setDefaultFilter('nearest','nearest')
 
@@ -45,37 +47,40 @@ function love.load()
         vsync = true
     })
 
-    player1Y = 30
-    player2Y = VIRTUAL_HEIGHT - 50
+    player1 = Paddle(10,30,5,20)
+    player2 = Paddle(VIRTUAL_WIDTH - 10, VIRTUAL_HEIGHT - 30, 5, 20)
 
-    ballX = VIRTUAL_WIDTH / 2 - 2
-    ballY = VIRTUAL_HEIGHT / 2 - 2
-
-    ballDX = math.random(2) == 1 and 100 or -100
-    ballDY = math.random(-50, 50)
+    ball = Ball(VIRTUAL_WIDTH / 2 - 2, VIRTUAL_HEIGHT / 2 - 2, 4, 4)
 
     gameState = 'start'
     
 end
 
 function love.update(dt)
-
+    -- player 1 movement
     if love.keyboard.isDown('w') then
-        player1Y = math.max(0, player1Y + -PADDLE_SPEED * dt)
+        player1.dy = -PADDLE_SPEED
     elseif love.keyboard.isDown('s') then
-        player1Y = math.min(VIRTUAL_HEIGHT - 20, player1Y + PADDLE_SPEED * dt)
+        player1.dy = PADDLE_SPEED
+    else
+        player1.dy = 0
     end
 
+    -- player 2 movement
     if love.keyboard.isDown('up') then
-        player2Y = math.max(0, player2Y + -PADDLE_SPEED * dt)
+        player2.dy = -PADDLE_SPEED
     elseif love.keyboard.isDown('down') then
-        player2Y = math.min(VIRTUAL_HEIGHT - 20, player2Y + PADDLE_SPEED * dt)
+        player2.dy = PADDLE_SPEED
+    else
+        player2.dy = 0
     end
 
     if gameState == 'play' then
-        ballX = ballX + ballDX * dt
-        ballY = ballY + ballDY * dt
+        ball:update(dt)
     end
+
+    player1:update(dt)
+    player2:update(dt)
 end
 
 function love.keypressed(key)
@@ -87,18 +92,12 @@ function love.keypressed(key)
         else
             gameState = 'start'
 
-            ballX = VIRTUAL_WIDTH / 2 - 2
-            ballY = VIRTUAL_HEIGHT / 2 - 2
-
-            ballDX = math.random(2) == 1 and 100 or -100
-            ballDY = math.random(-50, 50) * 1.5
+            ball:reset()
         end
     end
 end
 
---[[
-    Called after update by LÖVE2D, used to draw anything to the screen, updated or otherwise.
-]]
+
 function love.draw()
     push:apply('start')
 
@@ -112,11 +111,9 @@ function love.draw()
         love.graphics.printf('Hello Play State!', 0, 20, VIRTUAL_WIDTH, 'center')
     end
 
-    love.graphics.rectangle('fill',10,player1Y,5,20)
-
-    love.graphics.rectangle('fill', VIRTUAL_WIDTH - 10, player2Y, 5, 20)
-
-    love.graphics.rectangle('fill', ballX, ballY, 4, 4)
+    player1:render()
+    player2:render()
+    ball:render()
     
     push:apply('end')
 end
